@@ -17,20 +17,34 @@ const ViewPoll = () => {
   const qrRef = useRef(null)
 
   useEffect(() => {
-    const pollData = getPoll(id)
-    if (!pollData) {
-      navigate('/')
-      return
+    const loadPollData = () => {
+      const pollData = getPoll(id)
+      if (!pollData) {
+        navigate('/')
+        return
+      }
+
+      // Validate poll data
+      if (!pollData.createdAt || !pollData.options || !pollData.votes) {
+        navigate('/')
+        return
+      }
+
+      // Only update if data has changed
+      if (JSON.stringify(pollData) !== JSON.stringify(poll)) {
+        setPoll(pollData)
+      }
     }
 
-    // Validate poll data
-    if (!pollData.createdAt || !pollData.options || !pollData.votes) {
-      navigate('/')
-      return
-    }
+    // Load initial data
+    loadPollData()
 
-    setPoll(pollData)
-  }, [id, navigate])
+    // Set up polling interval
+    const interval = setInterval(loadPollData, 2000) // Check every 2 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval)
+  }, [id, navigate, poll])
 
   const handleVote = (e) => {
     e.preventDefault()
